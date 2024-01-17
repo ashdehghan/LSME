@@ -19,5 +19,7 @@ setuptools.setup(
 	"tqdm==4.65.0",
 	"matplotlib==3.7.2",
 	"networkx==2.8.8",
-	"numpy==1.25.2"]
+	"numpy==1.25.2",
+	"torch==2.1.2",
+	"torchsummary==1.5.1"]
 )

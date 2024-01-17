@@ -4,11 +4,16 @@ import networkx as nx
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
+from LSME.conv_encoder import Conv_Encoder
+
 class LSME:
 
 
 	def __init__(self, G):
 		self.G = G.to_undirected()
+		self.conv_encoder = Conv_Encoder()
+
+		
 
 
 	def build_embeddings(self, emb_dim, receptive_field, sample_size):
@@ -17,6 +22,8 @@ class LSME:
 			nb, nb_list = self.get_neighborhood_of_x(x, receptive_field)
 			A_mean = self.get_adj_matrix(nb, nb_list, x, self.G.nodes[x], sample_size)
 			A_set.append(A_mean)
+		A_set = np.array(A_set)
+		self.conv_encoder.encode(A_set)
 
 
 	def get_neighborhood_of_x(self, x, receptive_field):
