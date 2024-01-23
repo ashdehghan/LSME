@@ -1,6 +1,7 @@
 
 import torch
 import torch.nn as nn
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 from torchsummary import summary
 from torch.utils.data import DataLoader
@@ -32,7 +33,7 @@ class Autoencoder(nn.Module):
 		encoded = self.encoder(x)
 		encoded = self.embedding_input(encoded)
 		embedding = self.embedding_layer(encoded)
-		encoded = self.Embedding_output(embedding)
+		encoded = self.embedding_output(embedding)
 		decoded = self.decoder(encoded.view(-1, self.channel_size, self.encoder_out_size, self.encoder_out_size))
 		return [decoded, embedding]
 
@@ -44,7 +45,11 @@ class Conv_Encoder:
 
 	def encode(self, data, emb_dim):
 		
-		channel_size = 4
+		batch_size = 16
+		if data.shape[0] <= 16:
+			batch_size = 1
+
+		channel_size = 8
 		kernel_size = 3
 		padding = 1
 		stride = 1
@@ -55,10 +60,10 @@ class Conv_Encoder:
 
 		model = Autoencoder(emb_dim, encoder_out_size, channel_size)
 		data_tensor = torch.from_numpy(data).float()
-		data_loader = DataLoader(data_tensor, batch_size=1, shuffle=False)
+		data_loader = DataLoader(data_tensor, batch_size=batch_size, shuffle=False)
 		optimizer = torch.optim.Adam(model.parameters())
 		num_epochs = 10
-		for epoch in range(num_epochs):
+		for epoch in tqdm(range(num_epochs), desc="Training Encoder"):
 			for batch_idx, data in enumerate(data_loader):
 				data = data.view(-1, 1, input_size, input_size)
 				optimizer.zero_grad()
@@ -69,8 +74,9 @@ class Conv_Encoder:
 				optimizer.step()
 		
 		# Compute Embeddings
+		data_loader = DataLoader(data_tensor, batch_size=1, shuffle=False)
 		embeddings = []
-		for batch_idx, data in enumerate(data_loader):
+		for batch_idx, data in tqdm(enumerate(data_loader), desc="Building Embeddings"):
 			# xx = data.detach().cpu().numpy()
 			# plt.imshow(xx[0])
 			# plt.xticks([])
@@ -85,6 +91,8 @@ class Conv_Encoder:
 			# plt.xticks([])
 			# plt.yticks([])
 			# plt.show()
+
+			# input("...")
 			
 			embedding =list(pred[1].detach().cpu().numpy().flatten())
 			embeddings.append(embedding)

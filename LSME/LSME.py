@@ -21,15 +21,17 @@ class LSME:
 		A_set = []
 		node_ids = []
 		node_labels = []
+		A_size_list = []
 		for x in tqdm(list(self.G.nodes)):
 			node_ids.append(x)
 			node_labels.append(self.G.nodes[x]["role"])
-			# nb, nb_list = self.get_neighborhood_of_x(x, receptive_field)
 			nb, nb_list = self.get_nodes_x_hops_away(x, receptive_field)
-
 			A_mean = self.get_adj_matrix(nb, nb_list, x, self.G.nodes[x], sample_size)
+			A_size_list.append(A_mean.shape[0])
 			A_set.append(A_mean)
-		A_set = np.array(A_set)
+
+		A_set = self.format_signature_matrices(A_set, A_size_list)
+
 		embeddings = self.conv_encoder.encode(A_set, emb_dim)
 		embeddings = pd.DataFrame(embeddings)
 		embeddings.columns = ["emb_"+str(i) for i in range(embeddings.shape[1])]
@@ -38,29 +40,18 @@ class LSME:
 		return embeddings
 
 
-	def get_neighborhood_of_x(self, x, receptive_field):
-		res = [[x]]
-		visited_nodes = [x]
-		nn_1 = [x]
-		while True:
-			nn_2 = []
-			while len(nn_1) > 0:
-				i = nn_1.pop(0)
-				nn = set(list(self.G.neighbors(i)))
-				nn = list(set(nn).difference(visited_nodes))
-				nn = list(set(nn).difference(nn_2))
-				nn_2 += list(nn)
-			nn_1 = nn_2.copy()
-			if (len(visited_nodes) + len(nn_2)) >= receptive_field:
-				sample_size = receptive_field - len(visited_nodes)
-				nn_2 = list(np.random.choice(np.array(nn_2), sample_size, replace=False))
-				visited_nodes += nn_2
-				res.append(nn_2)
-				break
-			visited_nodes += nn_2
-			res.append(nn_2)
-		print(res)
-		return res, visited_nodes
+	def format_signature_matrices(self, A_set, A_size_list):
+		mod_set = []
+		max_size = max(A_size_list)
+		for A in A_set:
+			A_size = A.shape[0]
+			if A_size < max_size:
+				delta = max_size - A_size
+				mod_set.append(np.pad(A, [(0, delta), (0, delta)], 'constant', constant_values=0.0))
+			else:
+				mod_set.append(A)
+		return np.array(mod_set)
+
 
 
 	def get_nodes_x_hops_away(self, node, receptive_field):
@@ -121,12 +112,18 @@ class LSME:
 			A = nx.to_numpy_matrix(HH, nodelist=sorted(list(HH.nodes)))
 			A_list.append(A)
 		A_mean = np.mean(A_list, axis=0)
-		for ii in range(len(A_list)):
-			plt.imshow(A_list[ii])
-			plt.xticks([])
-			plt.yticks([])
-			# plt.show()
-			# plt.savefig("./test_folder/"+str(node_id)+".png", bbox_inches='tight')
-			plt.savefig("./test_folder/"+str(ii)+".png", bbox_inches='tight')
-		exit(0)
+		# for ii in range(len(A_list)):
+		# 	plt.imshow(A_list[ii])
+		# 	plt.xticks([])
+		# 	plt.yticks([])
+		# 	# plt.show()
+		# 	# plt.savefig("./test_folder/"+str(node_id)+".png", bbox_inches='tight')
+		# 	plt.savefig("./test_folder/"+str(ii)+".png", bbox_inches='tight')
+		
+		# plt.imshow(A_mean)
+		# plt.xticks([])
+		# plt.yticks([])
+		# # plt.show()
+		# plt.savefig("./test_folder/"+str(node_id)+".png", bbox_inches='tight')
+
 		return A_mean
