@@ -1,10 +1,9 @@
-"""Main LSME class for generating structural embeddings."""
+"""Main LSME class for computing local signature matrices."""
 
+import random
 import numpy as np
-import pandas as pd
 import networkx as nx
-from sklearn.decomposition import PCA
-from typing import Optional, Union
+from typing import Optional
 from .core import compute_local_signature_matrix
 
 
@@ -12,8 +11,8 @@ class LSME:
     """
     Local Structural Matrix Embeddings for graphs.
 
-    Generates structural embeddings for nodes in a graph by computing
-    local signature matrices and optionally reducing their dimensionality.
+    Computes local signature matrices for nodes in a graph by averaging
+    permuted local adjacency matrices.
 
     Parameters
     ----------
@@ -22,10 +21,6 @@ class LSME:
 
     n_samples : int, default=100
         Number of permutation samples to average for each signature matrix.
-
-    embedding_dim : int, optional
-        If specified, reduces signature matrices to this dimension using PCA.
-        If None, returns flattened signature matrices.
 
     verbose : bool, default=True
         Whether to print progress information.
@@ -38,23 +33,21 @@ class LSME:
         self,
         max_hops: int = 2,
         n_samples: int = 100,
-        embedding_dim: Optional[int] = None,
         verbose: bool = True,
         random_state: Optional[int] = None
     ):
         self.max_hops = max_hops
         self.n_samples = n_samples
-        self.embedding_dim = embedding_dim
         self.verbose = verbose
         self.random_state = random_state
-        self.pca = None
 
         if random_state is not None:
+            random.seed(random_state)
             np.random.seed(random_state)
 
-    def fit_transform(self, G: nx.Graph) -> pd.DataFrame:
+    def fit_transform(self, G: nx.Graph) -> dict:
         """
-        Generate embeddings for all nodes in the graph.
+        Compute signature matrices for all nodes in the graph.
 
         Parameters
         ----------
@@ -63,71 +56,54 @@ class LSME:
 
         Returns
         -------
-        pd.DataFrame
-            DataFrame with node IDs as index and embedding dimensions as columns (e0, e1, ...).
+        dict
+            Dictionary containing:
+            - "signature_matrices": dict mapping node_id to 2D numpy array
+            - "layer_info": dict mapping node_id to layer metadata
+            - "params": dict with algorithm parameters used
         """
         if not isinstance(G, nx.Graph):
             raise ValueError("Input must be a NetworkX graph")
 
         if G.number_of_nodes() == 0:
-            return pd.DataFrame()
+            return {
+                "signature_matrices": {},
+                "layer_info": {},
+                "params": {"max_hops": self.max_hops, "n_samples": self.n_samples}
+            }
 
-        # Compute signature matrices for all nodes
-        signatures = {}
+        signature_matrices = {}
+        layer_info = {}
         node_list = list(G.nodes())
 
         for i, node in enumerate(node_list):
             if self.verbose:
                 print(f"Computing signature for node {node} ({i+1}/{len(node_list)})...")
 
-            signatures[node] = compute_local_signature_matrix(
+            matrix, layers = compute_local_signature_matrix(
                 G, node, self.max_hops, self.n_samples
             )
 
-        # Flatten signature matrices
-        flattened_signatures = {}
-        max_size = 0
+            signature_matrices[node] = matrix
 
-        for node, matrix in signatures.items():
-            flat = matrix.flatten()
-            flattened_signatures[node] = flat
-            max_size = max(max_size, len(flat))
-
-        # Pad to same size if needed
-        for node in flattened_signatures:
-            current = flattened_signatures[node]
-            if len(current) < max_size:
-                padded = np.zeros(max_size)
-                padded[:len(current)] = current
-                flattened_signatures[node] = padded
-
-        # Create matrix of all embeddings
-        embedding_matrix = np.array([flattened_signatures[node] for node in node_list])
-
-        # Apply dimensionality reduction if requested
-        if self.embedding_dim is not None and self.embedding_dim < embedding_matrix.shape[1]:
-            if self.verbose:
-                print(f"Reducing dimensions from {embedding_matrix.shape[1]} to {self.embedding_dim}...")
-
-            self.pca = PCA(n_components=self.embedding_dim, random_state=self.random_state)
-            embedding_matrix = self.pca.fit_transform(embedding_matrix)
-
-        # Create DataFrame with proper column names
-        n_dims = embedding_matrix.shape[1]
-        columns = [f'e{i}' for i in range(n_dims)]
-
-        df = pd.DataFrame(
-            embedding_matrix,
-            index=pd.Index(node_list, name='node_id'),
-            columns=columns
-        )
+            layer_sizes = [len(layers.get(hop, [])) for hop in range(self.max_hops + 1)]
+            layer_info[node] = {
+                "layers": layers,
+                "layer_sizes": layer_sizes,
+                "total_nodes": sum(layer_sizes),
+                "max_hop_reached": max(layers.keys())
+            }
 
         if self.verbose:
-            print(f"Generated embeddings with shape: {df.shape}")
+            print(f"Computed {len(signature_matrices)} signature matrices")
 
-        return df
+        return {
+            "signature_matrices": signature_matrices,
+            "layer_info": layer_info,
+            "params": {"max_hops": self.max_hops, "n_samples": self.n_samples}
+        }
 
-    def transform(self, G: nx.Graph) -> pd.DataFrame:
+    def transform(self, G: nx.Graph) -> dict:
         """
         Alias for fit_transform (no separate fitting needed for this algorithm).
         """

@@ -79,18 +79,24 @@ def compute_local_signature_matrix(
     root: int,
     max_hops: int = 2,
     n_samples: int = 100
-) -> np.ndarray:
+) -> tuple[np.ndarray, Dict[int, List[int]]]:
     """
     Compute the averaged local signature matrix for a given root node.
 
     This generates n_samples permutations of the local adjacency matrix
     (with shuffled ordering within layers) and returns their average.
+
+    Returns
+    -------
+    tuple
+        (signature_matrix, layers) where signature_matrix is the averaged
+        adjacency matrix and layers is a dict mapping hop distance to node lists.
     """
     layers = get_nodes_by_hop_distance(G, root, max_hops)
 
     # Handle edge case: isolated node
     if len(layers) == 1 and len(layers[0]) == 1:
-        return np.array([[0.0]])
+        return np.array([[0.0]]), layers
 
     # Generate first matrix to get dimensions
     first_matrix = build_local_adjacency_matrix(G, root, layers, permute_layers=False)
@@ -104,4 +110,4 @@ def compute_local_signature_matrix(
     # Compute average
     avg_matrix = accumulated_matrix / n_samples
 
-    return avg_matrix
+    return avg_matrix, layers
