@@ -6,6 +6,12 @@ A simple and efficient library for generating structural embeddings of nodes in 
 
 from .lsme import LSME
 from .core import compute_local_signature_matrix, get_nodes_by_hop_distance
+from .encoder import SignatureEncoder
 
 __version__ = "0.1.0"
-__all__ = ["LSME", "compute_local_signature_matrix", "get_nodes_by_hop_distance"]
+__all__ = [
+    "LSME",
+    "SignatureEncoder",
+    "compute_local_signature_matrix",
+    "get_nodes_by_hop_distance"
+]

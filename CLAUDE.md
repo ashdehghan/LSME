@@ -18,6 +18,7 @@ cd code && pip install -e .
 
 # Run tests
 cd code && python test_lsme.py
+cd code && python test_encoder.py
 ```
 
 ### Manuscript (in `manuscript/` directory)
@@ -32,20 +33,26 @@ make view   # Open PDF (macOS)
 
 ## Code Architecture
 
-The LSME library generates structural embeddings for graph nodes:
+The LSME library generates structural signature matrices for graph nodes:
 
 1. **`core.py`** - Low-level algorithm functions:
    - `get_nodes_by_hop_distance()` - BFS to organize nodes by hop distance from root
    - `build_local_adjacency_matrix()` - Constructs adjacency matrix with layer-based ordering
-   - `compute_local_signature_matrix()` - Averages multiple permuted local adjacency matrices
+   - `compute_local_signature_matrix()` - Averages multiple permuted local adjacency matrices, returns (matrix, layers) tuple
 
 2. **`lsme.py`** - Main `LSME` class providing the public API:
-   - `fit_transform(G)` - Computes embeddings for all nodes, returns pandas DataFrame
-   - Handles flattening signature matrices, padding to uniform size, optional PCA reduction
+   - `fit_transform(G)` - Computes signature matrices for all nodes
+   - Returns dict with: `signature_matrices` (node → 2D array), `layer_info` (node → layer metadata), `params`
 
-The algorithm works by: for each node, extracting its k-hop neighborhood, building local adjacency matrices with random within-layer permutations, averaging these matrices, then flattening into embeddings.
+3. **`encoder/`** - CNN autoencoder subpackage for encoding signature matrices:
+   - `SignatureEncoder` - Main class for training autoencoder and extracting embeddings
+   - `SignatureAutoencoder` - PyTorch CNN model (encoder + decoder)
+   - `SignatureDataset` - PyTorch Dataset with padding and masking
+   - Uses masked MSE loss to handle variable-sized matrices
+
+The algorithm: for each node, extract k-hop neighborhood, build local adjacency matrices with random within-layer permutations, average these matrices to produce a signature matrix. Optionally, use the CNN autoencoder to encode matrices into fixed-size embeddings.
 
 ## Dependencies
 
-- numpy, networkx, pandas, scikit-learn
+- numpy, networkx, torch
 - Uses hatchling for builds
