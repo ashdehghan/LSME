@@ -1,48 +1,39 @@
-# LSME - Local Structural Matrix Embeddings
+# LSME: Local Structural Matrix Embeddings
 
-A simple and efficient library for generating structural embeddings of nodes in graphs.
+This repository contains the code and manuscript for the LSME (Local Structural Matrix Embeddings) project.
 
-## Installation
+## Repository Structure
+
+```
+LSME/
+├── code/          # Python framework implementation
+│   ├── lsme/      # Core library
+│   └── README.md  # Code documentation
+│
+└── manuscript/    # Paper (ICML 2025 format)
+    ├── main.tex   # Main LaTeX document
+    └── sections/  # Paper sections
+```
+
+## Code
+
+The `code/` directory contains the Python implementation of LSME for computing local structural embeddings on graphs.
+
+See [code/README.md](code/README.md) for installation and usage instructions.
+
+## Manuscript
+
+The `manuscript/` directory contains the LaTeX source for the paper.
+
+### Building the Paper
 
 ```bash
-pip install -e .
+cd manuscript
+make        # Build PDF
+make clean  # Clean build artifacts
+make view   # Open PDF (macOS)
 ```
 
-## Usage
+## License
 
-```python
-import networkx as nx
-from lsme import LSME
-
-# Create or load your graph
-G = nx.karate_club_graph()
-
-# Initialize LSME
-embedder = LSME(
-    max_hops=2,        # Neighborhood depth
-    n_samples=100,     # Number of permutations to average
-    embedding_dim=16,  # Optional: reduce to this dimension
-    verbose=True       # Print progress
-)
-
-# Generate embeddings
-embeddings = embedder.fit_transform(G)
-
-# Result is a pandas DataFrame with node_id as index
-# and embedding dimensions (e0, e1, ...) as columns
-print(embeddings.head())
-```
-
-## Parameters
-
-- `max_hops`: Maximum hop distance for local neighborhoods (default: 2)
-- `n_samples`: Number of permutation samples to average (default: 100)
-- `embedding_dim`: Optional dimensionality reduction via PCA
-- `verbose`: Print progress information (default: True)
-- `random_state`: Random seed for reproducibility
-
-## Output
-
-Returns a pandas DataFrame with:
-- Index: `node_id` (node identifiers from the graph)
-- Columns: `e0`, `e1`, ..., `ek` (embedding dimensions)
+TBD
