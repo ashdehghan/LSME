@@ -225,3 +225,7 @@ __marimo__/
 # Keep ICML style files but ignore compiled PDF
 !manuscript/*.sty
 !manuscript/*.bst
+
+# Experimentation outputs
+experimentation/**/outputs/*
+!experimentation/**/outputs/.gitkeep
