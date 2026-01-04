@@ -1,0 +1,133 @@
+site_name: LSME Documentation
+site_description: Local Structural Matrix Embeddings for Graphs
+site_url: https://yourusername.github.io/LSME/
+repo_url: https://github.com/yourusername/LSME
+repo_name: yourusername/LSME
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: deep purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: deep purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [code]
+          options:
+            docstring_style: numpy
+            docstring_options:
+              ignore_init_summary: true
+            merge_init_into_class: true
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            signature_crossrefs: true
+            members_order: source
+            heading_level: 2
+            show_signature_annotations: true
+            separate_signature: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+  - Concepts:
+      - The LSME Algorithm: concepts/algorithm.md
+      - Signature Matrices: concepts/signature-matrices.md
+      - Embedding Methods: concepts/methods.md
+  - API Reference:
+      - Overview: api/index.md
+      - LSME Class: api/lsme.md
+      - Core Functions: api/core.md
+      - Encoders:
+          - Overview: api/encoder/index.md
+          - CNNEncoder: api/encoder/cnn_encoder.md
+          - DNNEncoder: api/encoder/dnn_encoder.md
+          - BaseEncoder: api/encoder/base.md
+      - Methods:
+          - Overview: api/methods/index.md
+          - Stochastic: api/methods/stochastic.md
+          - Deterministic: api/methods/deterministic.md
+          - Random Walk: api/methods/random_walk.md
+          - Eigenvalue: api/methods/eigenvalue.md
+      - Graphs:
+          - Overview: api/graphs/index.md
+          - SyntheticGraphBuilder: api/graphs/builder.md
+          - Pattern Functions: api/graphs/patterns.md
+  - Examples:
+      - Overview: examples/index.md
+      - Jupyter Notebooks: examples/notebooks.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yourusername/LSME

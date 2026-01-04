@@ -1,48 +1,79 @@
 # LSME - Local Structural Matrix Embeddings
 
-A simple and efficient library for generating structural embeddings of nodes in graphs.
+A Python library for generating structural embeddings of nodes in graphs.
+
+For full documentation, see the [main README](../README.md) or build the docs:
+
+```bash
+pip install -e ".[docs]"
+mkdocs serve  # from repo root
+```
 
 ## Installation
 
 ```bash
 pip install -e .
+
+# With dev dependencies (pytest)
+pip install -e ".[dev]"
+
+# With docs dependencies (mkdocs)
+pip install -e ".[docs]"
 ```
 
-## Usage
+## Quick Start
 
 ```python
 import networkx as nx
 from lsme import LSME
 
-# Create or load your graph
+# Load a graph
 G = nx.karate_club_graph()
 
-# Initialize LSME
-embedder = LSME(
-    max_hops=2,        # Neighborhood depth
-    n_samples=100,     # Number of permutations to average
-    embedding_dim=16,  # Optional: reduce to this dimension
-    verbose=True       # Print progress
-)
+# Compute embeddings (default: stochastic method)
+lsme = LSME(max_hops=2, embedding_dim=32)
+result = lsme.fit_transform(G)
 
-# Generate embeddings
-embeddings = embedder.fit_transform(G)
-
-# Result is a pandas DataFrame with node_id as index
-# and embedding dimensions (e0, e1, ...) as columns
-print(embeddings.head())
+# Access results
+embeddings = result['embeddings']           # Dict: node -> 1D array
+signature_matrices = result['signature_matrices']  # Dict: node -> 2D array
 ```
 
-## Parameters
+## Available Methods
 
-- `max_hops`: Maximum hop distance for local neighborhoods (default: 2)
-- `n_samples`: Number of permutation samples to average (default: 100)
-- `embedding_dim`: Optional dimensionality reduction via PCA
-- `verbose`: Print progress information (default: True)
-- `random_state`: Random seed for reproducibility
+```python
+# Stochastic (default) - highest quality
+lsme = LSME(method='stochastic', max_hops=2, n_samples=100, embedding_dim=32)
 
-## Output
+# Deterministic - fast, no training
+lsme = LSME(method='deterministic', max_hops=3)
 
-Returns a pandas DataFrame with:
-- Index: `node_id` (node identifiers from the graph)
-- Columns: `e0`, `e1`, ..., `ek` (embedding dimensions)
+# Random walk - stochastic, no training
+lsme = LSME(method='random_walk', max_hops=2, rw_length=10)
+
+# Eigenvalue - spectral approach
+lsme = LSME(method='eigenvalue', max_hops=3)
+```
+
+## Key Parameters
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `method` | Embedding method | `'stochastic'` |
+| `max_hops` | Neighborhood radius | `2` |
+| `n_samples` | Permutation samples (stochastic) | `100` |
+| `embedding_dim` | Output dimension (stochastic) | `32` |
+| `encoder_type` | `'cnn'` or `'dnn'` | `'cnn'` |
+| `random_state` | Reproducibility seed | `None` |
+
+## Package Structure
+
+```
+lsme/
+├── __init__.py      # Public API exports
+├── lsme.py          # Main LSME class
+├── core.py          # Core utilities
+├── encoder/         # CNN/DNN autoencoders
+├── methods/         # Embedding methods
+└── graphs/          # Synthetic graph generation
+```
