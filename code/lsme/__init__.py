@@ -1,17 +1,21 @@
 """
 LSME - Local Structural Matrix Embeddings for graphs.
 
-A simple and efficient library for generating structural embeddings of nodes in graphs.
+A library for generating structural embeddings of nodes in graphs
+using multiple embedding methods.
 """
 
 from .lsme import LSME
-from .core import compute_local_signature_matrix, get_nodes_by_hop_distance
-from .encoder import SignatureEncoder
+from .core import get_nodes_by_hop_distance
+from .encoder import CNNEncoder, DNNEncoder, SignatureEncoder
+from .graphs import SyntheticGraphBuilder
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = [
     "LSME",
+    "CNNEncoder",
+    "DNNEncoder",
     "SignatureEncoder",
-    "compute_local_signature_matrix",
-    "get_nodes_by_hop_distance"
+    "SyntheticGraphBuilder",
+    "get_nodes_by_hop_distance",
 ]

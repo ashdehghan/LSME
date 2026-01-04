@@ -1,17 +1,20 @@
-"""
-CNN Autoencoder for encoding LSME signature matrices into fixed-size embeddings.
+"""Encoders for LSME signature matrices."""
 
-This module provides the SignatureEncoder class for training a convolutional
-autoencoder on signature matrices and extracting node embeddings.
-"""
-
-from .encoder import SignatureEncoder
-from .dataset import SignatureDataset
+from .base import BaseEncoder
+from .cnn_encoder import CNNEncoder, SignatureEncoder
+from .dnn_encoder import DNNEncoder
+from .dataset import SignatureDataset, collate_signature_batch
 from .model import SignatureAutoencoder, masked_mse_loss
+from .dnn_model import SignatureDNN
 
 __all__ = [
+    "BaseEncoder",
+    "CNNEncoder",
+    "DNNEncoder",
     "SignatureEncoder",
     "SignatureDataset",
     "SignatureAutoencoder",
-    "masked_mse_loss"
+    "SignatureDNN",
+    "masked_mse_loss",
+    "collate_signature_batch",
 ]

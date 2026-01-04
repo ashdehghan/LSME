@@ -1,20 +1,49 @@
-"""Core algorithm functions for Local Structural Matrix Embeddings."""
+"""Core shared utilities for Local Structural Matrix Embeddings."""
 
-import numpy as np
 import networkx as nx
 from collections import defaultdict
-from typing import Dict, List
-import random
+from typing import Any, Dict, List
 
 
-def get_nodes_by_hop_distance(G: nx.Graph, root: int, max_hops: int) -> Dict[int, List[int]]:
+def get_nodes_by_hop_distance(
+    G: nx.Graph,
+    root: Any,
+    max_hops: int
+) -> Dict[int, List[Any]]:
     """
     Get nodes organized by their hop distance from the root node.
 
-    Returns a dict where keys are hop distances (0, 1, 2, ...)
-    and values are lists of nodes at that distance.
+    Uses BFS to explore the neighborhood and organize nodes into layers
+    based on their shortest path distance from the root.
+
+    Parameters
+    ----------
+    G : networkx.Graph
+        The input graph.
+    root : Any
+        The root node to start from.
+    max_hops : int
+        Maximum hop distance to explore.
+
+    Returns
+    -------
+    dict
+        Dictionary where keys are hop distances (0, 1, 2, ...)
+        and values are lists of nodes at that distance.
+
+    Examples
+    --------
+    >>> import networkx as nx
+    >>> G = nx.path_graph(5)  # 0-1-2-3-4
+    >>> layers = get_nodes_by_hop_distance(G, root=2, max_hops=2)
+    >>> layers[0]  # Root node
+    [2]
+    >>> layers[1]  # 1 hop away
+    [1, 3]
+    >>> layers[2]  # 2 hops away
+    [0, 4]
     """
-    layers = defaultdict(list)
+    layers: Dict[int, List[Any]] = defaultdict(list)
     visited = {root}
     layers[0] = [root]
 
@@ -35,79 +64,3 @@ def get_nodes_by_hop_distance(G: nx.Graph, root: int, max_hops: int) -> Dict[int
         current_layer = next_layer
 
     return dict(layers)
-
-
-def build_local_adjacency_matrix(
-    G: nx.Graph,
-    root: int,
-    layers: Dict[int, List[int]],
-    permute_layers: bool = True
-) -> np.ndarray:
-    """
-    Build a local adjacency matrix centered at the root node.
-
-    The matrix is organized by layers (hop distances):
-    - Position (0,0) is the root node
-    - Subsequent blocks contain nodes at increasing hop distances
-
-    If permute_layers is True, randomly shuffle nodes within each layer (except root).
-    """
-    node_order = []
-
-    for hop in sorted(layers.keys()):
-        layer_nodes = layers[hop].copy()
-
-        # Permute nodes within layer (except root layer)
-        if permute_layers and hop > 0:
-            random.shuffle(layer_nodes)
-
-        node_order.extend(layer_nodes)
-
-    n = len(node_order)
-    adj_matrix = np.zeros((n, n), dtype=np.float32)
-
-    for i, node_i in enumerate(node_order):
-        for j, node_j in enumerate(node_order):
-            if G.has_edge(node_i, node_j):
-                adj_matrix[i, j] = 1.0
-
-    return adj_matrix
-
-
-def compute_local_signature_matrix(
-    G: nx.Graph,
-    root: int,
-    max_hops: int = 2,
-    n_samples: int = 100
-) -> tuple[np.ndarray, Dict[int, List[int]]]:
-    """
-    Compute the averaged local signature matrix for a given root node.
-
-    This generates n_samples permutations of the local adjacency matrix
-    (with shuffled ordering within layers) and returns their average.
-
-    Returns
-    -------
-    tuple
-        (signature_matrix, layers) where signature_matrix is the averaged
-        adjacency matrix and layers is a dict mapping hop distance to node lists.
-    """
-    layers = get_nodes_by_hop_distance(G, root, max_hops)
-
-    # Handle edge case: isolated node
-    if len(layers) == 1 and len(layers[0]) == 1:
-        return np.array([[0.0]]), layers
-
-    # Generate first matrix to get dimensions
-    first_matrix = build_local_adjacency_matrix(G, root, layers, permute_layers=False)
-    accumulated_matrix = first_matrix.copy()
-
-    # Generate and accumulate permuted matrices
-    for _ in range(n_samples - 1):
-        permuted_matrix = build_local_adjacency_matrix(G, root, layers, permute_layers=True)
-        accumulated_matrix += permuted_matrix
-
-    # Compute average
-    avg_matrix = accumulated_matrix / n_samples
-
-    return avg_matrix, layers

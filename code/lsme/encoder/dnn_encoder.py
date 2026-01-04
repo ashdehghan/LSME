@@ -1,4 +1,4 @@
-"""Main SignatureEncoder class for encoding LSME signature matrices."""
+"""DNN Encoder class for encoding LSME signature matrices."""
 
 from typing import Any, Dict, List, Optional
 
@@ -6,14 +6,19 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, random_split
 
+from .base import BaseEncoder
 from .dataset import SignatureDataset, collate_signature_batch
-from .model import SignatureAutoencoder, masked_mse_loss
+from .dnn_model import SignatureDNN
+from .model import masked_mse_loss
 from .utils import compute_padded_size, pad_matrix, create_mask
 
 
-class SignatureEncoder:
+class DNNEncoder(BaseEncoder):
     """
-    CNN Autoencoder for encoding LSME signature matrices into fixed-size embeddings.
+    Dense Neural Network Autoencoder for encoding LSME signature matrices.
+
+    Uses fully-connected layers to encode flattened signature matrices into
+    fixed-size embeddings. Better suited for smaller matrices.
 
     Parameters
     ----------
@@ -23,8 +28,8 @@ class SignatureEncoder:
     max_matrix_size : int, default=64
         Maximum matrix size to pad to. Matrices larger than this are truncated.
 
-    hidden_channels : list[int], optional
-        Number of channels in each conv layer. Default is [32, 64, 128, 256].
+    hidden_dims : list[int], optional
+        Dimensions for hidden layers. Default is [512, 256, 128].
 
     learning_rate : float, default=1e-3
         Learning rate for Adam optimizer.
@@ -46,14 +51,15 @@ class SignatureEncoder:
 
     Examples
     --------
-    >>> from lsme import LSME, SignatureEncoder
+    >>> from lsme import LSME
+    >>> from lsme.encoder import DNNEncoder
     >>> import networkx as nx
     >>>
     >>> G = nx.karate_club_graph()
     >>> lsme = LSME(max_hops=2, n_samples=100)
     >>> result = lsme.fit_transform(G)
     >>>
-    >>> encoder = SignatureEncoder(embedding_dim=32, num_epochs=50)
+    >>> encoder = DNNEncoder(embedding_dim=32, num_epochs=50)
     >>> embeddings = encoder.fit_transform(
     ...     result['signature_matrices'],
     ...     result['layer_info']
@@ -64,7 +70,7 @@ class SignatureEncoder:
         self,
         embedding_dim: int = 32,
         max_matrix_size: int = 64,
-        hidden_channels: Optional[List[int]] = None,
+        hidden_dims: Optional[List[int]] = None,
         learning_rate: float = 1e-3,
         batch_size: int = 32,
         num_epochs: int = 100,
@@ -74,7 +80,7 @@ class SignatureEncoder:
     ):
         self.embedding_dim = embedding_dim
         self.max_matrix_size = max_matrix_size
-        self.hidden_channels = hidden_channels or [32, 64, 128, 256]
+        self.hidden_dims = hidden_dims or [512, 256, 128]
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.num_epochs = num_epochs
@@ -82,7 +88,7 @@ class SignatureEncoder:
         self.verbose = verbose
         self.random_state = random_state
 
-        self._model: Optional[SignatureAutoencoder] = None
+        self._model: Optional[SignatureDNN] = None
         self._device: Optional[torch.device] = None
         self._padded_size: Optional[int] = None
         self._is_fitted: bool = False
@@ -159,16 +165,16 @@ class SignatureEncoder:
         signature_matrices: Dict[Any, np.ndarray],
         layer_info: Dict[Any, dict],
         validation_split: float = 0.1
-    ) -> 'SignatureEncoder':
+    ) -> 'DNNEncoder':
         """
         Train the autoencoder on signature matrices.
 
         Parameters
         ----------
         signature_matrices : dict
-            Dict mapping node_id to 2D numpy arrays (from LSME.fit_transform).
+            Dict mapping node_id to 2D numpy arrays.
         layer_info : dict
-            Dict mapping node_id to layer metadata (from LSME.fit_transform).
+            Dict mapping node_id to layer metadata.
         validation_split : float, default=0.1
             Fraction of data for validation.
 
@@ -181,13 +187,12 @@ class SignatureEncoder:
         self._device = self._get_device()
 
         if self.verbose:
-            print(f"Training on device: {self._device}")
+            print(f"Training DNNEncoder on device: {self._device}")
 
         # Determine optimal padded size
         max_original = max(info['total_nodes'] for info in layer_info.values())
-        self._padded_size = compute_padded_size(
-            max_original, self.max_matrix_size, len(self.hidden_channels)
-        )
+        # For DNN we use a fixed number of conv layers equivalent for size calculation
+        self._padded_size = compute_padded_size(max_original, self.max_matrix_size, 4)
 
         if self.verbose:
             print(f"Max matrix size in data: {max_original}")
@@ -234,10 +239,10 @@ class SignatureEncoder:
             )
 
         # Initialize model
-        self._model = SignatureAutoencoder(
+        self._model = SignatureDNN(
             input_size=self._padded_size,
             embedding_dim=self.embedding_dim,
-            hidden_channels=self.hidden_channels
+            hidden_dims=self.hidden_dims
         ).to(self._device)
 
         if self.verbose:
@@ -305,13 +310,12 @@ class SignatureEncoder:
         signature_matrices : dict
             Dict mapping node_id to 2D numpy arrays.
         layer_info : dict, optional
-            Layer metadata (used for efficient padding). If not provided,
-            original sizes are inferred from matrix dimensions.
+            Layer metadata for efficient padding.
 
         Returns
         -------
         dict
-            Dict mapping node_id to 1D embedding numpy array of shape (embedding_dim,).
+            Dict mapping node_id to 1D embedding numpy arrays.
         """
         if not self._is_fitted:
             raise RuntimeError("Encoder must be fitted before encoding. Call fit() first.")
@@ -321,12 +325,6 @@ class SignatureEncoder:
 
         with torch.no_grad():
             for node_id, matrix in signature_matrices.items():
-                # Get original size
-                if layer_info is not None:
-                    orig_size = layer_info[node_id]['total_nodes']
-                else:
-                    orig_size = matrix.shape[0]
-
                 # Pad and add batch/channel dimensions
                 padded = pad_matrix(matrix, self._padded_size)
                 tensor = torch.from_numpy(padded[np.newaxis, np.newaxis, :, :])
@@ -350,8 +348,7 @@ class SignatureEncoder:
         Returns
         -------
         dict
-            Dict mapping node_id to reconstructed 2D numpy arrays
-            (padded size, values in [0, 1]).
+            Dict mapping node_id to reconstructed 2D numpy arrays.
         """
         if not self._is_fitted:
             raise RuntimeError("Encoder must be fitted before decoding. Call fit() first.")
@@ -403,7 +400,7 @@ class SignatureEncoder:
         layer_info: Optional[Dict[Any, dict]] = None
     ) -> Dict[Any, float]:
         """
-        Compute per-node reconstruction error (MSE on valid region).
+        Compute per-node reconstruction error.
 
         Parameters
         ----------
@@ -454,10 +451,11 @@ class SignatureEncoder:
             raise RuntimeError("Cannot save unfitted encoder.")
 
         state = {
+            'encoder_type': 'dnn',
             'model_state_dict': self._model.state_dict(),
             'embedding_dim': self.embedding_dim,
             'max_matrix_size': self.max_matrix_size,
-            'hidden_channels': self.hidden_channels,
+            'hidden_dims': self.hidden_dims,
             'padded_size': self._padded_size,
             'learning_rate': self.learning_rate,
             'batch_size': self.batch_size,
@@ -467,7 +465,7 @@ class SignatureEncoder:
         torch.save(state, path)
 
     @classmethod
-    def load(cls, path: str, device: str = 'auto') -> 'SignatureEncoder':
+    def load(cls, path: str, device: str = 'auto') -> 'DNNEncoder':
         """
         Load a trained model from disk.
 
@@ -480,7 +478,7 @@ class SignatureEncoder:
 
         Returns
         -------
-        SignatureEncoder
+        DNNEncoder
             Loaded encoder ready for encoding.
         """
         state = torch.load(path, map_location='cpu')
@@ -488,7 +486,7 @@ class SignatureEncoder:
         encoder = cls(
             embedding_dim=state['embedding_dim'],
             max_matrix_size=state['max_matrix_size'],
-            hidden_channels=state['hidden_channels'],
+            hidden_dims=state['hidden_dims'],
             learning_rate=state['learning_rate'],
             batch_size=state['batch_size'],
             num_epochs=state['num_epochs'],
@@ -499,10 +497,10 @@ class SignatureEncoder:
         encoder._padded_size = state['padded_size']
         encoder._device = encoder._get_device()
 
-        encoder._model = SignatureAutoencoder(
+        encoder._model = SignatureDNN(
             input_size=encoder._padded_size,
             embedding_dim=encoder.embedding_dim,
-            hidden_channels=encoder.hidden_channels
+            hidden_dims=encoder.hidden_dims
         ).to(encoder._device)
 
         encoder._model.load_state_dict(state['model_state_dict'])

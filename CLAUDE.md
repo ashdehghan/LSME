@@ -56,3 +56,13 @@ The algorithm: for each node, extract k-hop neighborhood, build local adjacency 
 
 - numpy, networkx, torch
 - Uses hatchling for builds
+
+## Experimentation
+
+The `experimentation/test/` directory contains validation experiments (Jupyter notebooks). To run:
+
+```bash
+cd experimentation/test
+uv venv && uv pip install -e ../../code && uv pip install .
+uv run jupyter lab
+```
