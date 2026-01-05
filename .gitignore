@@ -154,6 +154,9 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# Playwright MCP screenshots
+.playwright-mcp/
+
 # mypy
 .mypy_cache/
 .dmypy.json

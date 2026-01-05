@@ -18,7 +18,7 @@ pip install lsme
 Clone the repository and install in development mode:
 
 ```bash
-git clone https://github.com/yourusername/LSME.git
+git clone https://github.com/elmspace/LSME.git
 cd LSME/code
 pip install -e .
 ```

@@ -1,25 +1,4 @@
-/* Custom styles for LSME documentation */
-
-/* Headings */
-.md-typeset h1 {
-  font-weight: 700;
-}
-
-/* API reference styling */
-.doc-contents {
-  padding-left: 1rem;
-  border-left: 3px solid var(--md-primary-fg-color);
-}
-
-/* Code blocks */
-.md-typeset pre > code {
-  font-size: 0.85em;
-}
-
-/* Tables */
-.md-typeset table:not([class]) {
-  font-size: 0.9em;
-}
+/* Minimal custom styles - using MkDocs Material defaults */
 
 /* Cards grid for home page */
 .grid.cards > ul {

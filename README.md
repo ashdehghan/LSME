@@ -31,7 +31,7 @@ print(f"Node 0 embedding: {embeddings[0].shape}")  # (32,)
 
 ```bash
 # Install from source
-git clone https://github.com/yourusername/LSME.git
+git clone https://github.com/elmspace/LSME.git
 cd LSME/code
 pip install -e .
 ```

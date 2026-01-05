@@ -1,26 +1,24 @@
 site_name: LSME Documentation
 site_description: Local Structural Matrix Embeddings for Graphs
-site_url: https://yourusername.github.io/LSME/
-repo_url: https://github.com/yourusername/LSME
-repo_name: yourusername/LSME
+site_url: https://elmspace.github.io/LSME/
+repo_url: https://github.com/elmspace/LSME
+repo_name: elmspace/LSME
 edit_uri: edit/main/docs/
 
 theme:
   name: material
   palette:
-    # Light mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: indigo
-      accent: deep purple
+    # Light mode (default - no media query)
+    - scheme: default
+      primary: blue
+      accent: light blue
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     # Dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: indigo
-      accent: deep purple
+    - scheme: slate
+      primary: blue
+      accent: light blue
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -36,11 +34,12 @@ theme:
     - content.tabs.link
     - content.code.copy
     - content.code.annotate
+    - toc.follow
   icon:
     repo: fontawesome/brands/github
   font:
-    text: Roboto
-    code: Roboto Mono
+    text: Inter
+    code: JetBrains Mono
 
 plugins:
   - search
@@ -76,6 +75,8 @@ markdown_extensions:
       anchor_linenums: true
       line_spans: __span
       pygments_lang_class: true
+      auto_title: true
+      use_pygments: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.tabbed:
@@ -87,13 +88,16 @@ markdown_extensions:
       permalink: true
   - pymdownx.arithmatex:
       generic: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 extra_javascript:
   - javascripts/mathjax.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
 
 extra_css:
-  - assets/stylesheets/extra.css
+  - assets/stylesheets/extra.css?v=3
 
 nav:
   - Home: index.md
@@ -130,4 +134,4 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/yourusername/LSME
+      link: https://github.com/elmspace/LSME

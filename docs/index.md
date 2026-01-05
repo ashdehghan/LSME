@@ -36,7 +36,7 @@ pip install lsme
 Or install from source:
 
 ```bash
-git clone https://github.com/yourusername/LSME.git
+git clone https://github.com/elmspace/LSME.git
 cd LSME/code
 pip install -e .
 ```

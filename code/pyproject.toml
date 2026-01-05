@@ -31,9 +31,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/LSME"
-Documentation = "https://yourusername.github.io/LSME"
-Repository = "https://github.com/yourusername/LSME"
+Homepage = "https://github.com/elmspace/LSME"
+Documentation = "https://elmspace.github.io/LSME"
+Repository = "https://github.com/elmspace/LSME"
 
 [project.optional-dependencies]
 dev = [
