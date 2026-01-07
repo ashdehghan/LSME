@@ -232,3 +232,6 @@ __marimo__/
 # Experimentation outputs
 experimentation/**/outputs/*
 !experimentation/**/outputs/.gitkeep
+
+# Personal notes
+manuscript/
