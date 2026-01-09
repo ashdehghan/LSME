@@ -60,7 +60,21 @@ def get_nodes_by_hop_distance(
         if not next_layer:
             break
 
-        layers[hop] = sorted(list(next_layer))
+        # Sort nodes for deterministic ordering
+        # Falls back to list order if nodes are not comparable
+        node_list = list(next_layer)
+        try:
+            node_list = sorted(node_list)
+        except TypeError:
+            # Nodes are not comparable (e.g., mixed types, custom objects)
+            # Use arbitrary but consistent order based on hash
+            try:
+                node_list = sorted(node_list, key=hash)
+            except TypeError:
+                # Even hash fails (unhashable types) - keep as-is
+                pass
+
+        layers[hop] = node_list
         current_layer = next_layer
 
     return dict(layers)

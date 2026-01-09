@@ -1,5 +1,6 @@
 """Utility functions for signature matrix preprocessing."""
 
+import warnings
 import numpy as np
 
 
@@ -27,12 +28,26 @@ def pad_matrix(
     -------
     np.ndarray
         Padded matrix of shape (target_size, target_size).
+
+    Warns
+    -----
+    UserWarning
+        If the matrix is larger than target_size and will be truncated.
     """
     original_size = matrix.shape[0]
 
-    if original_size >= target_size:
-        # Truncate if larger than target
+    if original_size > target_size:
+        # Truncate if larger than target - warn about data loss
+        warnings.warn(
+            f"Matrix of size {original_size}x{original_size} is larger than target size "
+            f"{target_size}x{target_size}. Data will be truncated. "
+            f"Consider increasing max_matrix_size parameter.",
+            UserWarning
+        )
         return matrix[:target_size, :target_size].astype(np.float32)
+
+    if original_size == target_size:
+        return matrix.astype(np.float32)
 
     padded = np.full((target_size, target_size), pad_value, dtype=np.float32)
     padded[:original_size, :original_size] = matrix
@@ -87,6 +102,10 @@ def compute_padded_size(
     -------
     int
         Optimal padded size (power of 2, capped at max_allowed).
+    Warns
+    -----
+    UserWarning
+        If max_original_size > max_allowed, indicating data truncation will occur.
     """
     # Minimum size to ensure final_spatial >= 1 after all convolutions
     min_size = 2 ** num_conv_layers  # e.g., 16 for 4 layers
@@ -94,4 +113,14 @@ def compute_padded_size(
     # Round up to nearest power of 2
     size = max(min_size, max_original_size)
     padded = 2 ** int(np.ceil(np.log2(size)))
+
+    # Warn if we're going to truncate data
+    if padded > max_allowed:
+        warnings.warn(
+            f"Computed padded size {padded} exceeds max_allowed {max_allowed}. "
+            f"Matrices larger than {max_allowed}x{max_allowed} will be truncated. "
+            f"Consider increasing max_matrix_size parameter to preserve all data.",
+            UserWarning
+        )
+
     return min(padded, max_allowed)

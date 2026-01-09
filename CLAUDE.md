@@ -11,8 +11,7 @@ LSME/
 ├── tests/             # Pytest test suite
 ├── docs/              # MkDocs documentation
 ├── examples/          # Jupyter notebook examples
-├── manuscript/        # LaTeX paper (ICML 2025)
-└── experimentation/   # Research notebooks
+└── manuscript/        # LaTeX paper (ICML 2025)
 ```
 
 ## Common Commands

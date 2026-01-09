@@ -188,6 +188,13 @@ class StochasticMethod(BaseMethod):
         if not isinstance(G, nx.Graph):
             raise ValueError("Input must be a NetworkX graph")
 
+        if G.is_directed():
+            raise ValueError(
+                "Stochastic method requires an undirected graph. "
+                "The signature matrix construction assumes symmetric adjacency. "
+                "Convert your graph using G.to_undirected() or use a different method."
+            )
+
         if G.number_of_nodes() == 0:
             return {
                 "embeddings": {},

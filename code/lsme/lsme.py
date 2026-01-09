@@ -194,6 +194,16 @@ class LSME:
         if not isinstance(G, nx.Graph):
             raise ValueError("Input must be a NetworkX graph")
 
+        # Stochastic method requires minimum 3 nodes for meaningful encoder training
+        # Empty graphs (0 nodes) are handled gracefully by returning empty results
+        n_nodes = G.number_of_nodes()
+        if self.method == 'stochastic' and 0 < n_nodes < 3:
+            raise ValueError(
+                f"Stochastic method requires at least 3 nodes for encoder training. "
+                f"Graph has {n_nodes} node(s). "
+                f"Use 'deterministic', 'random_walk', or 'eigenvalue' method for small graphs."
+            )
+
         method_instance = self._create_method_instance()
         result = method_instance.compute(G, verbose=self.verbose)
 

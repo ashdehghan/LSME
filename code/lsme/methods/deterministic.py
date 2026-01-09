@@ -113,7 +113,7 @@ class DeterministicMethod(BaseMethod):
         Parameters
         ----------
         G : networkx.Graph
-            The input graph.
+            The input graph. Must be undirected; directed graphs will raise an error.
         verbose : bool, default=True
             Whether to print progress information.
 
@@ -128,6 +128,13 @@ class DeterministicMethod(BaseMethod):
         """
         if not isinstance(G, nx.Graph):
             raise ValueError("Input must be a NetworkX graph")
+
+        if G.is_directed():
+            raise ValueError(
+                "Deterministic method requires an undirected graph. "
+                "The within-layer edge counting assumes each edge is seen from both endpoints. "
+                "Convert your graph using G.to_undirected() or use a different method."
+            )
 
         if G.number_of_nodes() == 0:
             return {

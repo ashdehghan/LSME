@@ -51,6 +51,39 @@ def path_graph_3():
     return nx.path_graph(3)
 
 
+@pytest.fixture
+def two_node_graph():
+    """Minimal 2-node connected graph."""
+    G = nx.Graph()
+    G.add_edge(0, 1)
+    return G
+
+
+@pytest.fixture
+def single_node_graph():
+    """Graph with single node (no edges)."""
+    G = nx.Graph()
+    G.add_node(0)
+    return G
+
+
+@pytest.fixture
+def disconnected_graph():
+    """Disconnected graph with two components."""
+    G = nx.Graph()
+    G.add_edges_from([(0, 1), (1, 2)])  # Component 1
+    G.add_edges_from([(3, 4), (4, 5)])  # Component 2
+    return G
+
+
+@pytest.fixture
+def directed_graph():
+    """Simple directed graph."""
+    G = nx.DiGraph()
+    G.add_edges_from([(0, 1), (1, 2), (2, 3)])
+    return G
+
+
 # ============================================================
 # LSME Result Fixtures (for encoder tests)
 # ============================================================

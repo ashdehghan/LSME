@@ -146,6 +146,13 @@ class RandomWalkMethod(BaseMethod):
         if not isinstance(G, nx.Graph):
             raise ValueError("Input must be a NetworkX graph")
 
+        if G.is_directed():
+            raise ValueError(
+                "Random walk method requires an undirected graph. "
+                "The transition probability calculation assumes bidirectional edges. "
+                "Convert your graph using G.to_undirected() or use a different method."
+            )
+
         if G.number_of_nodes() == 0:
             return {
                 "embeddings": {},

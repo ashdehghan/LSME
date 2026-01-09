@@ -108,6 +108,60 @@ class TestEdgeCases:
             "Empty graph should return empty matrices"
         assert result["layer_info"] == {}, "Empty graph should return empty layer_info"
 
+    def test_two_node_graph_stochastic_raises_error(self, two_node_graph):
+        """Test stochastic method on 2-node graph raises error (requires >= 3 nodes)."""
+        embedder = LSME(
+            method='stochastic',
+            max_hops=1,
+            n_samples=10,
+            encoder_epochs=10,
+            verbose=False
+        )
+        with pytest.raises(ValueError, match="at least 3 nodes"):
+            embedder.fit_transform(two_node_graph)
+
+    def test_single_node_graph(self, single_node_graph):
+        """Test single-node graph with all methods."""
+        for method in ['deterministic', 'random_walk', 'eigenvalue']:
+            embedder = LSME(method=method, max_hops=2, verbose=False)
+            result = embedder.fit_transform(single_node_graph)
+
+            assert len(result['embeddings']) == 1, f"{method}: Should have 1 embedding"
+            assert result['embeddings'][0].ndim == 1, f"{method}: Embedding should be 1D"
+
+    def test_disconnected_graph(self, disconnected_graph):
+        """Test disconnected graph with multiple components."""
+        embedder = LSME(method='deterministic', max_hops=2, verbose=False)
+        result = embedder.fit_transform(disconnected_graph)
+
+        # Should have embeddings for all 6 nodes
+        assert len(result['embeddings']) == 6, "Should have 6 embeddings"
+
+        # Each embedding should be valid
+        for node, emb in result['embeddings'].items():
+            assert emb.ndim == 1, f"Embedding for node {node} should be 1D"
+            assert not np.any(np.isnan(emb)), f"Embedding for node {node} should not have NaN"
+
+    def test_directed_graph_raises_error(self, directed_graph):
+        """Test that directed graphs raise appropriate errors for ALL methods."""
+        # All methods should raise error for directed graphs
+        for method in ['stochastic', 'deterministic', 'random_walk', 'eigenvalue']:
+            embedder = LSME(method=method, max_hops=2, verbose=False)
+            with pytest.raises(ValueError, match="undirected"):
+                embedder.fit_transform(directed_graph)
+
+    def test_stochastic_single_node_raises_error(self, single_node_graph):
+        """Test that stochastic method on single-node graph raises error (requires >= 3 nodes)."""
+        embedder = LSME(
+            method='stochastic',
+            max_hops=1,
+            n_samples=10,
+            encoder_epochs=10,
+            verbose=False
+        )
+        with pytest.raises(ValueError, match="at least 3 nodes"):
+            embedder.fit_transform(single_node_graph)
+
 
 class TestReproducibility:
     """Test reproducibility with random_state."""

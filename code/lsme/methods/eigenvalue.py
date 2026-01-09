@@ -1,5 +1,6 @@
 """Eigenvalue-based embedding method using transition probability matrices."""
 
+import warnings
 import numpy as np
 import networkx as nx
 from typing import Any, Dict, Optional
@@ -106,6 +107,18 @@ class EigenvalueMethod(BaseMethod):
 
         # Extract eigenvalues
         eigenvalues = np.linalg.eigvals(P)
+
+        # Warn if eigenvalues have significant imaginary parts
+        imag_parts = np.abs(np.imag(eigenvalues))
+        if np.any(imag_parts > 1e-6):
+            max_imag = np.max(imag_parts)
+            warnings.warn(
+                f"Eigenvalues have significant imaginary parts (max: {max_imag:.6f}). "
+                "Only real parts will be used. This may indicate a non-symmetric "
+                "transition matrix, which can occur with unusual graph structures.",
+                UserWarning
+            )
+
         eigenvalues = np.sort(np.real(eigenvalues))[::-1]  # Sort descending
 
         # Pad/truncate to fixed size
@@ -137,6 +150,13 @@ class EigenvalueMethod(BaseMethod):
         """
         if not isinstance(G, nx.Graph):
             raise ValueError("Input must be a NetworkX graph")
+
+        if G.is_directed():
+            raise ValueError(
+                "Eigenvalue method requires an undirected graph. "
+                "The within-layer edge counting assumes each edge is seen from both endpoints. "
+                "Convert your graph using G.to_undirected() or use a different method."
+            )
 
         if G.number_of_nodes() == 0:
             return {

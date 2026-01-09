@@ -186,8 +186,20 @@ class DNNEncoder(BaseEncoder):
         self._set_random_state()
         self._device = self._get_device()
 
+        n_samples = len(signature_matrices)
+        if n_samples == 0:
+            raise ValueError("Cannot fit encoder on empty dataset")
+
         if self.verbose:
             print(f"Training DNNEncoder on device: {self._device}")
+
+        # Defensive check: encoder requires at least 2 samples for BatchNorm
+        # This should not be reached if LSME validation is working correctly
+        if n_samples < 2:
+            raise ValueError(
+                f"Encoder requires at least 2 samples for training (BatchNorm constraint). "
+                f"Got {n_samples} sample(s). Use LSME with at least 3 nodes for stochastic method."
+            )
 
         # Determine optimal padded size
         max_original = max(info['total_nodes'] for info in layer_info.values())
@@ -204,9 +216,21 @@ class DNNEncoder(BaseEncoder):
         )
 
         # Train/validation split
+        # Skip validation for very small datasets to avoid BatchNorm issues
+        # BatchNorm requires batch_size > 1, so we need at least 2 training samples
         n_total = len(full_dataset)
-        n_val = max(1, int(n_total * validation_split)) if n_total > 1 else 0
-        n_train = n_total - n_val
+        min_train_samples = 2  # Minimum for BatchNorm to work
+
+        if n_total < min_train_samples + 1:
+            # Too few samples for validation split
+            n_val = 0
+            n_train = n_total
+        else:
+            n_val = max(1, int(n_total * validation_split))
+            # Ensure we keep at least min_train_samples for training
+            if n_total - n_val < min_train_samples:
+                n_val = max(0, n_total - min_train_samples)
+            n_train = n_total - n_val
 
         if n_val > 0:
             train_dataset, val_dataset = random_split(
