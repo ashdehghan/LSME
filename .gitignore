@@ -229,9 +229,8 @@ __marimo__/
 !manuscript/*.sty
 !manuscript/*.bst
 
-# Experimentation outputs
-experimentation/**/outputs/*
-!experimentation/**/outputs/.gitkeep
+# macOS
+.DS_Store
 
 # Personal notes
 manuscript/
