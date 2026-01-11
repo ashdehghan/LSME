@@ -234,3 +234,6 @@ __marimo__/
 
 # Personal notes
 manuscript/
+
+# Experiments (local sandbox, not tracked)
+experiments/

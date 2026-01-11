@@ -19,8 +19,16 @@ Clone the repository and install in development mode:
 
 ```bash
 git clone https://github.com/elmspace/LSME.git
-cd LSME/code
+cd LSME
 pip install -e .
+```
+
+### Using UV (Recommended)
+
+```bash
+git clone https://github.com/elmspace/LSME.git
+cd LSME
+uv pip install -e .
 ```
 
 ## Optional Dependencies

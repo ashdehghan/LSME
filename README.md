@@ -56,8 +56,16 @@ The result is embeddings that capture meaningful structural patterns while remai
 
 ```bash
 git clone https://github.com/elmspace/LSME.git
-cd LSME/code
+cd LSME
 pip install -e .
+```
+
+### Using UV (Recommended)
+
+```bash
+git clone https://github.com/elmspace/LSME.git
+cd LSME
+uv pip install -e .
 ```
 
 ### With Development Dependencies
@@ -283,7 +291,7 @@ jupyter lab
 
 ```
 LSME/
-├── code/                  # Python library
+├── src/                   # Python library
 │   └── lsme/
 │       ├── lsme.py        # Main LSME class
 │       ├── core.py        # Core utilities (BFS, neighborhood extraction)
@@ -301,8 +309,7 @@ LSME/
 ├── tests/                 # Pytest test suite
 ├── docs/                  # MkDocs documentation
 ├── examples/              # Jupyter notebook tutorials
-├── manuscript/            # LaTeX paper (ICML 2025)
-└── experimentation/       # Research notebooks
+└── pyproject.toml         # Package configuration
 ```
 
 ---
@@ -314,7 +321,7 @@ Full documentation is available at [elmspace.github.io/LSME](https://elmspace.gi
 ### Building Documentation Locally
 
 ```bash
-pip install -e "./code[docs]"
+pip install -e ".[docs]"
 mkdocs serve
 ```
 
@@ -326,7 +333,7 @@ Then visit `http://localhost:8000`
 
 ```bash
 # Install dev dependencies
-pip install -e "./code[dev]"
+pip install -e ".[dev]"
 
 # Run all tests
 pytest tests/

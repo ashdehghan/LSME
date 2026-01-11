@@ -6,12 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 LSME/
-├── code/              # Python library for LSME
+├── src/               # Python library for LSME
 │   └── lsme/          # Core package
 ├── tests/             # Pytest test suite
 ├── docs/              # MkDocs documentation
 ├── examples/          # Jupyter notebook examples
-└── manuscript/        # LaTeX paper (ICML 2025)
+└── pyproject.toml     # Package configuration
 ```
 
 ## Common Commands
@@ -20,13 +20,16 @@ LSME/
 
 ```bash
 # Install in development mode
-cd code && pip install -e .
+pip install -e .
+
+# Install with uv (recommended)
+uv pip install -e .
 
 # Install with dev dependencies (pytest)
-cd code && pip install -e ".[dev]"
+pip install -e ".[dev]"
 
 # Install with docs dependencies (mkdocs)
-cd code && pip install -e ".[docs]"
+pip install -e ".[docs]"
 ```
 
 ### Running Tests
@@ -52,7 +55,7 @@ pytest tests/ -m "not slow"
 
 ```bash
 # Install docs dependencies
-pip install -e "./code[docs]"
+pip install -e ".[docs]"
 
 # Serve locally (from repo root)
 mkdocs serve
@@ -71,21 +74,11 @@ mkdocs gh-deploy
 cd examples
 
 # Install dependencies
-pip install -e ../code
+pip install -e ..
 pip install jupyterlab matplotlib plotly pandas scikit-learn umap-learn
 
 # Start Jupyter
 jupyter lab
-```
-
-### Manuscript
-
-```bash
-cd manuscript
-make        # Full build (pdflatex + bibtex)
-make quick  # Quick compile without bibtex
-make clean  # Remove build artifacts
-make view   # Open PDF (macOS)
 ```
 
 ## Code Architecture

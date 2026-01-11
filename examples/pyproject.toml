@@ -18,4 +18,4 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-lsme = { path = "../code", editable = true }
+lsme = { path = "..", editable = true }

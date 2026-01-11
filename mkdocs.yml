@@ -46,7 +46,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths: [code]
+          paths: [src]
           options:
             docstring_style: numpy
             docstring_options:
